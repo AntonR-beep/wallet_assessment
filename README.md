@@ -56,3 +56,7 @@ ethvault/
 │── styles/               # Global styles
 └── backend/              # Backend
 ```
+
+### Screenshot Of Connected Wallet
+
+![Connected Wallet Test](./docs/screenshots/Screenshot_2025-09-16_at_15.04.56.png)
