@@ -25,9 +25,12 @@ export function Navbar() {
     connectWallet,
     disconnectWallet,
     isConnected,
-    networkName,
     refreshBalances,
+    ethBalance,
+    dETHBalance,
+    sETHBalance,
   } = useWeb3()
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -55,13 +58,9 @@ export function Navbar() {
     setMobileMenuOpen(false)
   }, [pathname])
 
-  const formatBalance = (balance: string) => {
-    return Number.parseFloat(balance).toFixed(4)
-  }
-
   const copyAddress = () => {
     if (account) {
-      navigator.clipboard.writeText(account)
+      void navigator.clipboard.writeText(account)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
@@ -72,6 +71,8 @@ export function Navbar() {
     await refreshBalances()
     setTimeout(() => setIsRefreshing(false), 1000)
   }
+
+  const formatBalance = (balance?: string) => Number.parseFloat(balance ?? "0").toFixed(4)
 
   return (
     <>
@@ -113,7 +114,7 @@ export function Navbar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="hidden lg:flex items-center space-x-3 bg-lightblue-50 px-4 py-2 rounded-lg">
-                          
+
                           <Button
                             variant="ghost"
                             size="icon"
@@ -181,7 +182,21 @@ export function Navbar() {
                           {account ? `${account.substring(0, 6)}...${account.substring(account.length - 4)}` : ""}
                         </div>
 
-                      
+                        {/* Balances */}
+                        <div className="mt-3 space-y-1 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-lightblue-700">ETH</span>
+                            <span className="font-medium">{formatBalance(ethBalance)}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-lightblue-700">dETH</span>
+                            <span className="font-medium">{formatBalance(dETHBalance)}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-lightblue-700">sETH</span>
+                            <span className="font-medium">{formatBalance(sETHBalance)}</span>
+                          </div>
+                        </div>
                       </div>
 
                       <DropdownMenuSeparator />
@@ -224,6 +239,20 @@ export function Navbar() {
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>Wallet Balances</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <div className="px-2 py-1.5 text-sm">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-lightblue-700">ETH</span>
+                        <span className="font-medium">{formatBalance(ethBalance)}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-lightblue-700">dETH</span>
+                        <span className="font-medium">{formatBalance(dETHBalance)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-lightblue-700">sETH</span>
+                        <span className="font-medium">{formatBalance(sETHBalance)}</span>
+                      </div>
+                    </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={disconnectWallet} className="cursor-pointer text-red-500">
                       <LogOut className="mr-2 h-4 w-4" />
@@ -265,7 +294,7 @@ export function Navbar() {
             {!isConnected && (
               <Button
                 onClick={() => {
-                  connectWallet()
+                  void connectWallet()
                   setMobileMenuOpen(false)
                 }}
                 className="mt-4 bg-white text-lightblue-700 hover:bg-lightblue-50"

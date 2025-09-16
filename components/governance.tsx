@@ -27,7 +27,7 @@ type Proposal = {
 }
 
 export function Governance() {
-  const { governanceContract, sETHContract, isConnected, connectWallet, account, sETHBalance } = useWeb3()
+  const { governanceContract, isConnected, account, sETHBalance } = useWeb3()
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [loading, setLoading] = useState(true)
   const [description, setDescription] = useState("")
@@ -465,7 +465,8 @@ export function Governance() {
               <p className="text-lightblue-600 max-w-md mx-auto mb-6">
                 Be the first to create a governance proposal and help shape the future of the protocol.
               </p>
-              <Button variant="outline" onClick={() => document.querySelector('[data-value="create"]')?.click()}>
+              <Button variant="outline" onClick={() => document.querySelector<HTMLButtonElement>
+              ('[data-value="create"]')?.click()}>
                 Create a Proposal
               </Button>
             </Card>

@@ -35,6 +35,9 @@ type Web3ContextType = {
   chainId: number | null
   refreshBalances: () => Promise<void>
   networkName: string
+  ethBalance: string
+  dETHBalance: string
+  sETHBalance: string
 }
 
 const Web3Context = createContext<Web3ContextType>({
@@ -51,6 +54,9 @@ const Web3Context = createContext<Web3ContextType>({
   chainId: null,
   refreshBalances: async () => {},
   networkName: "",
+  ethBalance: "0",
+  dETHBalance: "0",
+  sETHBalance: "0",
 })
 
 export const useWeb3 = () => useContext(Web3Context)
@@ -67,6 +73,9 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
   const [chainId, setChainId] = useState<number | null>(null)
   const [networkName, setNetworkName] = useState("")
   const [hasShownConnectToast, setHasShownConnectToast] = useState(false)
+  const [ethBalance, setEthBalance] = useState<string>("0")
+  const [dETHBalance, setDETHBalance] = useState<string>("0")
+  const [sETHBalance, setSETHBalance] = useState<string>("0")
 
   const { toast } = useToast()
 
@@ -108,7 +117,7 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentChainId = Number.parseInt(chainIdHex, 16)
         console.log("Current chain ID:", currentChainId)
 
-        // If not on the correct network, ask user to switch
+        // If not on the correct network, ask the user to switch
         if (currentChainId !== HOLESKY_CHAIN_ID) {
           console.log("Not on the correct network, attempting to switch...")
           try {
@@ -119,7 +128,7 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
             })
             console.log("Successfully switched network")
           } catch (switchError: any) {
-            // If network hasn't been added, add it to wallet
+            // If the network hasn't been added, add it to the wallet
             if (switchError.code === 4902) {
               console.log("Network not found, adding network...")
               await window.ethereum.request({
@@ -145,15 +154,15 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Create direct provider to RPC for reliable connection
+        // Create a direct provider to RPC for reliable connection
         const directProvider = new ethers.JsonRpcProvider(HOLESKY_RPC_URL)
         console.log("Created direct provider to RPC")
 
-        // Create browser provider for wallet interaction
+        // Create a browser provider for wallet interaction
         const browserProvider = new ethers.BrowserProvider(window.ethereum)
         console.log("Created browser provider")
 
-        // Get signer from browser provider
+        // Get signer from the browser provider
         const web3Signer = await browserProvider.getSigner()
         console.log("Got signer:", await web3Signer.getAddress())
 
@@ -206,22 +215,29 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
         // Get ETH balance directly from RPC
         const directBalance = await getEthBalanceDirectly(userAddress)
         console.log("Set ETH balance to:", directBalance)
+        setEthBalance(directBalance)
 
         // Get dETH and sETH balances if contracts are available
         try {
           const dETH = new ethers.Contract(DETH_ADDRESS, dETHAbi, directProvider)
           const dETHBal = await dETH.balanceOf(userAddress)
-          console.log("dETH balance:", ethers.formatEther(dETHBal))
+          const dBal = ethers.formatEther(dETHBal)
+          console.log("dETH balance:", dBal)
+          setDETHBalance(dBal)
         } catch (error) {
           console.error("Error getting dETH balance:", error)
+          setDETHBalance("0")
         }
 
         try {
           const sETH = new ethers.Contract(SETH_ADDRESS, sETHAbi, directProvider)
           const sETHBal = await sETH.balanceOf(userAddress)
-          console.log("sETH balance:", ethers.formatEther(sETHBal))
+          const sBal = ethers.formatEther(sETHBal)
+          console.log("sETH balance:", sBal)
+          setSETHBalance(sBal)
         } catch (error) {
           console.error("Error getting sETH balance:", error)
+          setSETHBalance("0")
         }
 
         // Only show toast when first connected
@@ -269,26 +285,33 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
         // Get ETH balance directly from RPC
         const directBalance = await getEthBalanceDirectly(account)
         console.log("Updated ETH balance:", directBalance)
+        setEthBalance(directBalance)
 
-        // Get dETH balance if contract is available
+        // Get dETH balance if the contract is available
         if (provider) {
           try {
             const dETH = new ethers.Contract(DETH_ADDRESS, dETHAbi, provider)
             const dETHBal = await dETH.balanceOf(account)
-            console.log("Updated dETH balance:", ethers.formatEther(dETHBal))
+            const dBal = ethers.formatEther(dETHBal)
+            console.log("Updated dETH balance:", dBal)
+            setDETHBalance(dBal)
           } catch (error) {
             console.error("Error refreshing dETH balance:", error)
+            setDETHBalance("0")
           }
         }
 
-        // Get sETH balance if contract is available
+        // Get sETH balance if the contract is available
         if (provider) {
           try {
             const sETH = new ethers.Contract(SETH_ADDRESS, sETHAbi, provider)
             const sETHBal = await sETH.balanceOf(account)
-            console.log("Updated sETH balance:", ethers.formatEther(sETHBal))
+            const sBal = ethers.formatEther(sETHBal)
+            console.log("Updated sETH balance:", sBal)
+            setSETHBalance(sBal)
           } catch (error) {
             console.error("Error refreshing sETH balance:", error)
+            setSETHBalance("0")
           }
         }
       } catch (error) {
@@ -308,12 +331,16 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
           // Get ETH balance directly from RPC
           const directBalance = await getEthBalanceDirectly(accounts[0])
           console.log("Updated ETH balance after account change:", directBalance)
+          setEthBalance(directBalance)
 
-          refreshBalances()
+          void refreshBalances()
         } else {
           setAccount(null)
           setIsConnected(false)
           setHasShownConnectToast(false)
+          setEthBalance("0")
+          setDETHBalance("0")
+          setSETHBalance("0")
         }
       })
 
@@ -332,26 +359,30 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsConnected(false)
           setNetworkName("")
           setHasShownConnectToast(false)
+          setEthBalance("0")
+          setDETHBalance("0")
+          setSETHBalance("0")
         } else {
           setNetworkName("Connected")
           if (account) {
             // If there's already a connected account, refresh data
             const directBalance = await getEthBalanceDirectly(account)
             console.log("Updated ETH balance after chain change:", directBalance)
-            refreshBalances()
+            setEthBalance(directBalance)
+            void refreshBalances()
           }
         }
       })
     }
 
     return () => {
-      if (typeof window !== "undefined" && window.ethereum) {
+      if (typeof window !== "undefined" && window.ethereum?.removeAllListeners) {
         window.ethereum.removeAllListeners()
       }
     }
   }, [account])
 
-  // Auto connect if previously connected
+  // Auto-connect if previously connected
   useEffect(() => {
     const checkConnection = async () => {
       if (typeof window !== "undefined" && window.ethereum) {
@@ -369,7 +400,7 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    checkConnection()
+    void checkConnection()
   }, [])
 
   // Refresh balances periodically
@@ -380,7 +411,7 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
       // Refresh balances every 15 seconds
       intervalId = setInterval(() => {
         console.log("Periodic balance refresh")
-        refreshBalances()
+        void refreshBalances()
       }, 15000)
     }
 
@@ -407,6 +438,9 @@ export const Web3Provider: React.FC<{ children: React.ReactNode }> = ({ children
         chainId,
         refreshBalances,
         networkName,
+        ethBalance,
+        dETHBalance,
+        sETHBalance,
       }}
     >
       {children}

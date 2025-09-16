@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { account, connectWallet, isConnected, ethBalance, dETHBalance, sETHBalance, refreshBalances, networkName } =
+  const { account, connectWallet, isConnected, ethBalance, dETHBalance, sETHBalance, refreshBalances } =
     useWeb3()
   const { theme, setTheme } = useTheme()
   const [isRefreshing, setIsRefreshing] = useState(false)
